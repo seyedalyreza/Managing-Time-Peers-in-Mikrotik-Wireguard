@@ -1,0 +1,34 @@
+# Log start of script
+:log info "Starting MikroTik script"
+
+# Retrieve current date
+:local currentDate [/system clock get date]
+:log info ("Current date: $currentDate")
+
+# Loop through WireGuard peers
+:foreach i in=[/interface wireguard peer find] do={
+    # Retrieve last handshake time
+    :local lastHandshake [/interface wireguard peer get $i last-handshake]
+    :log info ("Peer $i last handshake: $lastHandshake")
+
+    # Check if last handshake is greater than 00:00:00
+    :if ($lastHandshake > "00:00:00") do={
+        # Retrieve peer comment
+        :local comment [/interface wireguard peer get $i comment]
+        :log info ("Peer $i comment: $comment")
+        
+        # Check if comment is not empty and does not contain "-"
+        :if ([:find $comment "-"] < 0) do={
+            # Update comment with current date
+            /interface wireguard peer set $i comment=("$comment ++ Connected on $currentDate")
+            :log info ("Updated comment for Peer $i with current date")
+        } else={
+            :log info ("Skipping Peer $i with empty or hyphen-containing comment")
+        }
+    } else={
+        :log info ("Skipping Peer $i with last handshake less than 00:00:00")
+    }
+}
+
+# Log end of script
+:log info "MikroTik script completed"
