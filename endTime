@@ -1,0 +1,13 @@
+# Get current date
+:local currentDate [/system clock get date]
+:log info "Current date: $currentDate"
+
+# Find WireGuard peers with comments matching the current date and disable them
+:foreach i in=[/interface wireguard peer find] do={
+    :local comment [/interface wireguard peer get $i comment]
+    :if ($comment = $currentDate) do={
+        /interface wireguard peer set $i disabled=yes
+        :put ("Match found for $currentDate, Peer $i disabled.")
+        :log info "Match found for peer: $i, Disabled."
+    }
+}
